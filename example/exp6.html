@@ -1,0 +1,102 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>普通拖拽</title>
+<style>
+div {width: 100px; height: 100px; border-radius: 50%; background: #e0543e; position: absolute; color: #eee; line-height: 100px; text-align: center; font-size: 30px; cursor: move; z-index: 0;}
+#div1 { left: 0;}
+#div2 { left: 150px;}
+</style>
+</head>
+
+<body>
+<div id="div1">1</div>
+<div id="div2">2</div>
+</body>
+
+<script>
+window.onload = function(){
+	// 引用
+	// var oDiv1 = document.getElementById('div1');
+	// var oDiv2 = document.getElementById('div2');
+	var oDiv1 = new Drag({    
+		id : 'div1',
+		toDown : function(obj){
+			obj.style.opacity = '0.6';
+			obj.innerHTML = parseInt(obj.innerHTML) +1;
+		},
+		toUp : function(obj){
+			obj.style.opacity = '1';
+		}
+	});
+
+	var oDiv2 = new Drag();
+	oDiv2.init({    
+		id : 'div2',
+		toDown : function(obj){
+			obj.style.background = '#555';
+		},
+		toUp : function(obj){
+			obj.style.background = '#e0543e';
+		}
+	});
+
+};
+
+// 封装对象
+function Drag(opt){
+	this.obj = null; // this:Drag对象，this.obj:元素
+	this.disX = 0;
+	this.disY = 0;
+	this.settings = { //默认参数
+		toDown : function(){},
+		toMove : function(){},
+		toUp : function(){}
+	};
+	opt && this.init(opt);
+}
+
+Drag.prototype.init = function(opt){
+	var This = this;
+	this.obj = document.getElementById(opt.id);
+	this.extend( this.settings , opt );
+	this.obj.onmousedown = function(ev){
+		var ev = ev || window.event;
+		This.fnDown(ev);
+		This.settings.toDown(This.obj);
+		if (This.obj.setCapture) {This.obj.setCapture();}
+		document.onmousemove = function(ev){
+			var ev = ev || window.event;
+			This.fnMove(ev);
+		};
+		document.onmouseup = function(){
+			This.fnUp();
+			This.settings.toUp(This.obj);
+			if (This.obj.releaseCapture) {This.obj.releaseCapture();}
+		};
+		return false;
+	};
+};
+
+Drag.prototype.fnDown = function(ev){
+	this.obj.style.zIndex = '999';
+	this.disX = ev.clientX - this.obj.offsetLeft;
+	this.disY = ev.clientY - this.obj.offsetTop;
+};
+Drag.prototype.fnMove = function(ev){
+	this.obj.style.left = ev.clientX - this.disX + 'px';
+	this.obj.style.top = ev.clientY - this.disY + 'px';
+};
+Drag.prototype.fnUp = function(){
+	this.obj.style.zIndex = '0';
+	document.onmousemove = null;
+	document.onmouseup = null;
+};
+Drag.prototype.extend = function(obj1,obj2){
+	for(var attr in obj2){
+		obj1[attr] = obj2[attr];
+	}
+};
+</script>
+</html>

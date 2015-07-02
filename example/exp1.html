@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>普通拖拽</title>
+<style>
+#div1 {width: 200px; height: 200px; border-radius: 50%; background: #e0543e; position: absolute; text-align: center; line-height: 200px;}
+</style>
+<script>
+window.onload = function() {
+    var oDiv = document.getElementById('div1');
+    oDiv.onmousedown = function(ev) {
+        var ev = ev || event; 
+        // 1、Event 对象代表事件的状态
+        // 2、ie6\7\8下获取不到ev
+
+        var disX = ev.clientX - this.offsetLeft;
+        var disY = ev.clientY - this.offsetTop;
+        // 获取鼠标点击时在div中的相对位置
+
+        if (oDiv.setCapture) {oDiv.setCapture();}
+        // 文字选中bug：ie下，设置全局捕获
+
+        document.onmousemove = function(ev) {
+            var ev = ev || event;
+            oDiv.style.left = ev.clientX - disX + 'px';
+            oDiv.style.top = ev.clientY - disY + 'px';
+        };
+        document.onmouseup = function() {
+            document.onmousemove = null;
+            // 获取当前鼠标位置，
+            // 减去与div的相对位置得到当前div应该被拖拽的位置
+
+            if (oDiv.releaseCapture) {oDiv.releaseCapture();}
+            // 文字选中bug：ie下，释放全局捕获
+        };
+        return false;
+        // 文字选中bug：标准下，阻止事件默认行为
+    };
+}
+</script>
+</head>
+<body>
+<div id="div1"></div>
+</body>
+</html>
