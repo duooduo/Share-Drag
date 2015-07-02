@@ -1,0 +1,158 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>限制范围拖拽</title>
+<style>
+* { margin: 0; padding: 0;}
+body { padding: 10px;}
+p { width: 630px; height: 50px; margin: 0 auto; font-family: '\5FAE\8F6F\96C5\9ED1', sans-serif; font-size: 20px; color: #666; position: relative;}
+p input { height: 24px; width: 130px; position: absolute; top: 8px; right: 0;}
+.boxWrap { zoom: 1; width: 630px; margin: 0 auto;}
+.boxWrap:after { content: ''; display: block; clear: both;}
+#text { text-shadow: 1px 1px 10px #e0543e; padding: 0 10px;}
+.box { float: left; width: 300px; height: 300px; line-height: 300px; font-size: 30px; text-align: center; font-family: '\5FAE\8F6F\96C5\9ED1', sans-serif; color: #666;}
+#box1 { background: #ddd; margin-right: 30px;}
+#box2 { background: #C3C9DD;}
+#div1 {width: 100px; height: 100px; background: #e0543e; position: absolute; z-index: 999;}
+</style>
+</head>
+
+<body>
+<br />
+<p>红色方块在<span id="text">box1</span>范围内拖拽：<input type="button" value="点击切换至box2" data-range="box1"/></p>
+<div class="boxWrap">
+    <div id="box1" class="box">box1
+        <div id="div1"></div>
+    </div>
+    <div id="box2" class="box">box2</div>
+</div>
+
+</body>
+
+<script>
+var obj = document.getElementById('div1');
+var win = document.body;
+var box1 = document.getElementById('box1');
+var box2 = document.getElementById('box2');
+var onOff = document.getElementsByTagName('input')[0];
+var oRange = box1;
+
+setData(onOff,'box1');
+
+// json保存限制的范围
+var rangeJson = { 
+    left    : posLeft(oRange),  
+    right   : posLeft(oRange) + oRange.offsetWidth - obj.offsetWidth,
+    top     : posTop(oRange),
+    bottom  : posTop(oRange) + oRange.offsetHeight - obj.offsetHeight
+}
+// console.log( rangeJson.left + '+' + rangeJson.top);
+// console.log( posLeft(oRange) + '+' + posTop(oRange));
+obj.style.left = rangeJson.left + 'px';
+obj.style.top = rangeJson.top + 'px';
+
+obj.onmousedown = function(ev) {
+    var ev = ev || event;
+    var disX = ev.clientX - this.offsetLeft;
+    var disY = ev.clientY - this.offsetTop;
+    if (obj.setCapture) {obj.setCapture();}
+    document.onmousemove = function(ev) {
+        var ev = ev || event;
+        var L = ev.clientX - disX;
+        var T = ev.clientY - disY;
+
+        if ( L < rangeJson.left) { L = rangeJson.left; } 
+        else if (L > rangeJson.right) { L = rangeJson.right; }
+        if ( T < rangeJson.top ) { T = rangeJson.top; } 
+        else if ( T > rangeJson.bottom) { T = rangeJson.bottom; }
+
+        obj.style.left = L + 'px';
+        obj.style.top = T + 'px';
+    };
+    document.onmouseup = function() {
+        document.onmousemove = null;
+        if (obj.releaseCapture) {obj.releaseCapture();}
+    };
+    return false;
+};
+onOff.onclick = function() {
+    var text = document.getElementById('text');
+    var tag = getData(onOff);
+
+    if( tag === 'box1' ) { 
+        refresh(box2);
+        setData(onOff,'box2');
+        text.innerText = 'box2';
+        this.value = '点击切换至win';
+    } else if( tag === 'box2' ) { 
+        refresh(win);
+        setData(onOff,'win');
+        text.innerText = '屏幕';
+        this.value = '点击切换至box1';
+    } else {
+        refresh(box1);
+        setData(onOff,'box1');
+        text.innerText = 'box1';
+        this.value = '点击切换至box2';
+    }
+}
+function setData(obj,str){
+    if( obj.dataset ){ obj.dataset.range = str;} 
+    else { obj.setAttribute('data-range',str);}
+}
+function getData(obj){
+    if(obj.dataset){ var tag = obj.dataset.range;} 
+    else { var tag = obj.getAttribute('data-range');}
+    return tag;
+}
+function refresh(oRange){
+    if(oRange == win){
+        rangeJson = {
+            left    : 0, 
+            right   : document.documentElement.clientWidth - obj.offsetWidth,
+            top     : 0,
+            bottom  : document.documentElement.clientHeight - obj.offsetHeight
+        }
+    } else {
+        rangeJson = {
+            left    : posLeft(oRange), 
+            right   : posLeft(oRange) + oRange.offsetWidth - obj.offsetWidth,
+            top     : posTop(oRange),
+            bottom  : posTop(oRange) + oRange.offsetHeight - obj.offsetHeight
+        }
+    }
+    obj.style.left = rangeJson.left + 'px';
+    obj.style.top = rangeJson.top + 'px';
+}
+/* 获取绝对位置 */
+function posLeft(obj){
+    var iLeft = 0;
+    while(obj){
+        iLeft += obj.offsetLeft;
+        obj = obj.offsetParent;
+        if(obj && obj!=document.body && obj!=document.documentElement){
+            iLeft += getStyle(obj, 'borderLeftWidth');
+        }
+    }
+    return iLeft;
+}
+function posTop(obj){
+    var iTop = 0;
+    while(obj){
+        iTop += obj.offsetTop;
+        obj = obj.offsetParent;
+        if(obj && obj!=document.body && obj!=document.documentElement){
+            iTop += getStyle(obj, 'borderTopWidth');
+        }
+    }
+    return iTop;
+}
+function getStyle(obj,attr){
+    if(obj.currentStyle){
+        return parseFloat( obj.currentStyle[attr]) || 0;
+    }
+    return parseFloat( getComputedStyle(obj)[attr]) || 0;
+}
+</script>
+</html>
